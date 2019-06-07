@@ -91,7 +91,11 @@ class Node:
         return best_params
 
     def fit(self, X, y):
-        self.prediction = list(set(y))
+        if not isinstance(y, (list, tuple, np.ndarray)):
+            self.prediction = list(set([y]))
+        else:
+            self.prediction = list(set(y))
+
         if len(self.prediction) == 1:
             self.prediction = self.prediction[0]
             return self
@@ -148,7 +152,7 @@ class Node:
             print((self._depth, self.prediction))
 
     def predict_probability(self, X):
-        return [self.predict_probability_once(x) for x in X.to_numpy()]
+        return [self.predict_probability_once(x) for x in X]
 
 
 class SimilarityForest:
@@ -178,16 +182,17 @@ class SimilarityForest:
             raise ValueError("Cannot use n and frac in the same time")
 
         if frac is None and n is None:
-            return X.to_numpy(), y.to_numpy().T[0]
+            return X, y.T[0]
 
-        sample_x = X.sample(n=n, frac=frac, random_state=self._random)
-        sample_y = y.loc[sample_x.index]
+        sample_x = pd.DataFrame(X).sample(n=n, frac=frac, random_state=self._random)
+        sample_y = pd.Series(y).loc[sample_x.index]
         return sample_x.to_numpy(), sample_y.to_numpy().T[0]
 
     def fit(self, X: pd.DataFrame, y: pd.DataFrame):
         assert len(X) == len(y)
 
-        self.classes = sorted(set(y.to_numpy().T[0]))
+        # self.classes = sorted(set(y.to_numpy().T[0]))
+        self.classes = np.unique(y)
 
         self._trees = [Node(1,
                             self._sim_function,
@@ -210,6 +215,7 @@ class SimilarityForest:
             result.append(tmp)
 
         for line in probs[1]:
+            line = list(map(int, line))
             depths.append(sum(line)/len(line))
 
         for i in range(len(result)):
