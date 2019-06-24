@@ -19,7 +19,7 @@ def cosine(a,b):
 
 if __name__ == '__main__':
 
-    y, X = DataParser("data/a1a.txt", 123).parse()
+    # y, X = DataParser("data/a1a.txt", 123).parse()
     # y, X = DataParser("data/breast-cancer.txt", 10).parse()
     # y, X = DataParser("data/german-numer.txt", 24).parse()
     # y, X = DataParser("data/heart.txt", 13).parse()
@@ -27,12 +27,15 @@ if __name__ == '__main__':
     # y, X = DataParser("data/mushrooms.txt", 112).parse()
     # y, X = DataParser("data/splice.txt", 60).parse()
 
+    # X = pd.read_csv('data/umap_train.csv', header=0)
+    # y = pd.read_csv('data/umap_label.csv', header=None)
+
     X = pd.DataFrame(MinMaxScaler().fit_transform(X), columns=X.columns).to_numpy()
     y = y.apply(pd.to_numeric).to_numpy()
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4)
-
-    sim_forest = SimilarityForest(n_estimators=10, similarity_function=cosine)
+    #
+    sim_forest = SimilarityForest(n_estimators=100, similarity_function=np.dot, max_depth=5)
     sim_forest.fit(X_train, y_train)
     sf_pred = sim_forest.predict(X_test)
 
@@ -40,7 +43,7 @@ if __name__ == '__main__':
     print(confusion_matrix(y_test, sf_pred))
     print(classification_report(y_test, sf_pred))
 
-    rf = RandomForestClassifier(n_estimators=10)
+    rf = RandomForestClassifier(n_estimators=100, max_depth=5)
     rf.fit(X_train, y_train.ravel())
     rf_pred = rf.predict(X_test)
 
